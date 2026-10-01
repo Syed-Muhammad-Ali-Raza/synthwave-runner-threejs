@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Neon Dash - A polished low-poly synthwave endless runner built in Three.js" />
+  <title>Neon Dash 3D - Low-Poly Endless Runner</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Modular Stylesheet System -->
+  <link rel="stylesheet" href="css/main.css">
+
+  <!-- Import Maps for Three.js ES Module -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container"></div>
+  
+  <!-- Red Flash on Collision -->
+  <div id="flash-overlay"></div>
+
+  <!-- UI & Menus -->
+  <div id="ui-container">
+    <!-- Heads-Up Display during gameplay -->
+    <div id="hud">
+      <div class="hud-left">
+        <div class="hud-card">
+          <div>
+            <div class="hud-label">Score</div>
+            <div id="hud-score" class="hud-value">0</div>
+          </div>
+        </div>
+        <div class="hud-card coin-badge">
+          <span class="coin-icon"></span>
+          <div>
+            <div class="hud-label">Coins</div>
+            <div id="hud-coins" class="hud-value" style="color: var(--accent);">0</div>
+          </div>
+        </div>
+        <!-- Active Powerup Bars -->
+        <div id="powerup-container"></div>
+      </div>
+
+      <div class="hud-right">
+        <div class="hud-card">
+          <div>
+            <div class="hud-label">Distance</div>
+            <div id="hud-dist" class="hud-value">0m</div>
+          </div>
+        </div>
+        <button id="btn-pause" class="btn-icon interactive" title="Pause (Esc / P)">
+          ⏸
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile helper hint -->
+    <div id="mobile-hints">
+      <span>⬅ Swipe Left</span>
+      <span>⬆ Jump</span>
+      <span>⬇ Slide</span>
+      <span>Swipe Right ➡</span>
+    </div>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="screen-start" class="screen-overlay active">
+    <div class="modal-box">
+      <div>
+        <h1 class="game-title">Neon Dash</h1>
+        <p class="game-subtitle">RETRO SYNTHWAVE RUNNER</p>
+      </div>
+
+      <div class="stat-item" style="width: 100%;">
+        <span class="stat-label">Best High Score</span>
+        <span id="start-best-score" class="stat-val">0</span>
+      </div>
+
+      <div class="controls-hint">
+        <div class="control-row">
+          <span>Change Lane</span>
+          <span><span class="key-badge">A</span> / <span class="key-badge">D</span> or <span class="key-badge">◄</span> <span class="key-badge">►</span></span>
+        </div>
+        <div class="control-row">
+          <span>Jump Barrier</span>
+          <span><span class="key-badge">W</span> / <span class="key-badge">▲</span> / <span class="key-badge">Space</span></span>
+        </div>
+        <div class="control-row">
+          <span>Slide Under Beam</span>
+          <span><span class="key-badge">S</span> / <span class="key-badge">▼</span></span>
+        </div>
+        <div class="control-row" style="margin-top: 4px; color: #fff;">
+          <span>Mobile:</span>
+          <span>Swipe 4 Directions</span>
+        </div>
+      </div>
+
+      <div class="settings-row">
+        <button id="btn-sound-toggle" class="btn-icon interactive" title="Toggle Audio">
+          🔊
+        </button>
+        <span style="font-size: 13px; color: var(--text-muted);">Audio: <strong id="sound-status-label" style="color: #fff;">ON</strong></span>
+      </div>
+
+      <button id="btn-start-play" class="btn-primary interactive">RUN NOW</button>
+    </div>
+  </div>
+
+  <!-- Pause Screen -->
+  <div id="screen-pause" class="screen-overlay">
+    <div class="modal-box">
+      <h2 class="game-title" style="font-size: 36px;">GAME PAUSED</h2>
+      <div class="btn-group">
+        <button id="btn-resume" class="btn-primary interactive">Resume</button>
+        <button id="btn-pause-restart" class="btn-secondary interactive">Restart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="screen-gameover" class="screen-overlay">
+    <div class="modal-box">
+      <div>
+        <div id="gameover-new-record" class="badge-new-record">★ NEW RECORD ★</div>
+        <h2 class="game-title" style="font-size: 40px; margin-top: 6px;">GAME OVER</h2>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Final Score</span>
+          <span id="go-score" class="stat-val" style="color: var(--secondary);">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Coins Collected</span>
+          <span id="go-coins" class="stat-val" style="color: var(--accent);">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Distance</span>
+          <span id="go-distance" class="stat-val">0m</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">All-Time Best</span>
+          <span id="go-best" class="stat-val">0</span>
+        </div>
+      </div>
+
+      <button id="btn-restart" class="btn-primary interactive">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Modular Game Entry Point -->
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

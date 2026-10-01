@@ -1,0 +1,80 @@
+/* ==========================================================================
+   GLOBAL BASE & CONTAINER LAYOUT
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text);
+  touch-action: none;
+}
+
+#canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+#flash-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ff1e56;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.08s ease-out;
+}
+
+#ui-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.interactive {
+  pointer-events: auto;
+}
+
+#mobile-hints {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  width: 100%;
+  display: none;
+  justify-content: space-around;
+  padding: 0 20px;
+  pointer-events: none;
+  opacity: 0.35;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 2px 8px #000;
+}
+
+@media (max-width: 600px) {
+  #mobile-hints {
+    display: flex;
+  }
+}

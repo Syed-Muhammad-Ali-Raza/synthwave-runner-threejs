@@ -1,0 +1,16 @@
+/* ==========================================================================
+   DESIGN TOKENS & CSS VARIABLES
+   ========================================================================== */
+:root {
+  --primary: #ff2a85;
+  --primary-glow: rgba(255, 42, 133, 0.45);
+  --secondary: #00f0ff;
+  --secondary-glow: rgba(0, 240, 255, 0.45);
+  --accent: #ffe600;
+  --accent-glow: rgba(255, 230, 0, 0.45);
+  --bg-dark: #0b0718;
+  --panel-bg: rgba(18, 12, 38, 0.75);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --text: #ffffff;
+  --text-muted: #a59fc2;
+}
