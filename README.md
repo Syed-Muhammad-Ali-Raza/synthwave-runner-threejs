@@ -92,6 +92,48 @@ Install the **Live Server** extension and click **"Go Live"**.
 
 Open your browser at `http://localhost:3000`.
 
+On Windows without Node, Python also works:
+
+```bash
+py -m http.server 3000
+```
+
+---
+
+## 🌐 Deployment
+
+The game is a static site and is deployed automatically to GitHub Pages by
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) on every
+push to `main`.
+
+**Live site:** <https://syed-muhammad-ali-raza.github.io/synthwave-runner-threejs/>
+
+The workflow publishes only `index.html`, `css/`, `src/` and `.nojekyll` from the
+default branch. It does not use repository secrets, requires only
+`contents: read`, `pages: write` and `id-token: write`, and pins all third-party
+actions to immutable commit SHAs.
+
+Repository setup (one time, in **Settings → Pages**): choose **GitHub Actions**
+as the Pages source. No custom domain is configured; the default `github.io`
+URL is used.
+
+---
+
+## 🔒 Security
+
+- **Content Security Policy** in `index.html` allows scripts only from this origin,
+  the pinned Three.js CDN URL and the hashed inline import map. Frames, plugins,
+  form submissions, workers and unexpected network destinations are blocked.
+  If you edit the import map, regenerate its SHA-256 hash and update the CSP.
+- **Safe DOM construction**: power-up HUD elements are built with `createElement`
+  and `textContent`; no runtime value is inserted via `innerHTML`.
+- **Validated persisted data**: the stored high score must be a non-negative
+  safe integer before it is used.
+- **Deployment hardening**: secret-pattern scan before publishing, least-privilege
+  permissions, pinned actions and no untrusted pull-request deployments.
+
+See [`SECURITY.md`](SECURITY.md) for how to report a vulnerability.
+
 ---
 
 ## ⚙️ Customization & Tuning

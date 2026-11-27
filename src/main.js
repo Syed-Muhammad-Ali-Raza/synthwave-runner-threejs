@@ -106,7 +106,8 @@ let cameraShakeAmount = 0;
 // Load persisted data
 try {
   const savedScore = localStorage.getItem('neondash_high_score');
-  if (savedScore) bestScore = parseInt(savedScore, 10) || 0;
+  const parsedScore = Number.parseInt(savedScore ?? '', 10);
+  if (Number.isSafeInteger(parsedScore) && parsedScore >= 0) bestScore = parsedScore;
   const savedAudio = localStorage.getItem('neondash_audio_muted');
   if (savedAudio === 'true') {
     audio.muted = true;
@@ -139,39 +140,54 @@ function triggerScorePop() {
   hudScore.classList.add('pop');
 }
 
+// Build power-up badges with DOM APIs instead of innerHTML so no runtime value
+// can ever be interpreted as markup.
+function createPowerupPill(label, value, color, percent) {
+  const pill = document.createElement('div');
+  pill.className = 'powerup-pill';
+
+  const header = document.createElement('div');
+  header.className = 'powerup-header';
+  header.style.color = color;
+
+  const name = document.createElement('span');
+  name.textContent = label;
+  const status = document.createElement('span');
+  status.textContent = value;
+  header.append(name, status);
+
+  const barBackground = document.createElement('div');
+  barBackground.className = 'powerup-bar-bg';
+  const barFill = document.createElement('div');
+  barFill.className = 'powerup-bar-fill';
+  barFill.style.width = percent + '%';
+  barFill.style.background = color;
+  barFill.style.boxShadow = '0 0 8px ' + color;
+  barBackground.appendChild(barFill);
+
+  pill.append(header, barBackground);
+  return pill;
+}
+
 function updatePowerupHUD() {
-  powerupContainer.innerHTML = '';
+  powerupContainer.replaceChildren();
 
   if (player.activeShield) {
-    const pill = document.createElement('div');
-    pill.className = 'powerup-pill';
-    pill.innerHTML = `
-      <div class="powerup-header" style="color: #39ff14;"><span>Shield</span><span>ON</span></div>
-      <div class="powerup-bar-bg"><div class="powerup-bar-fill" style="width: 100%; background: #39ff14; box-shadow: 0 0 8px #39ff14;"></div></div>
-    `;
-    powerupContainer.appendChild(pill);
+    powerupContainer.appendChild(createPowerupPill('Shield', 'ON', '#39ff14', 100));
   }
 
   if (player.activeMagnetTimer > 0) {
     const pct = (player.activeMagnetTimer / CONFIG.magnetDuration) * 100;
-    const pill = document.createElement('div');
-    pill.className = 'powerup-pill';
-    pill.innerHTML = `
-      <div class="powerup-header" style="color: #00f0ff;"><span>Magnet</span><span>${player.activeMagnetTimer.toFixed(1)}s</span></div>
-      <div class="powerup-bar-bg"><div class="powerup-bar-fill" style="width: ${pct}%; background: #00f0ff; box-shadow: 0 0 8px #00f0ff;"></div></div>
-    `;
-    powerupContainer.appendChild(pill);
+    powerupContainer.appendChild(
+      createPowerupPill('Magnet', player.activeMagnetTimer.toFixed(1) + 's', '#00f0ff', pct)
+    );
   }
 
   if (player.activeDoubleTimer > 0) {
     const pct = (player.activeDoubleTimer / CONFIG.doubleScoreDuration) * 100;
-    const pill = document.createElement('div');
-    pill.className = 'powerup-pill';
-    pill.innerHTML = `
-      <div class="powerup-header" style="color: #ff007f;"><span>2X Score</span><span>${player.activeDoubleTimer.toFixed(1)}s</span></div>
-      <div class="powerup-bar-bg"><div class="powerup-bar-fill" style="width: ${pct}%; background: #ff007f; box-shadow: 0 0 8px #ff007f;"></div></div>
-    `;
-    powerupContainer.appendChild(pill);
+    powerupContainer.appendChild(
+      createPowerupPill('2X Score', player.activeDoubleTimer.toFixed(1) + 's', '#ff007f', pct)
+    );
   }
 }
 
