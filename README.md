@@ -13,6 +13,7 @@ A browser endless runner built with Three.js. The level, character animation, pa
 - Magnet, shield and score-multiplier power-ups with HUD timers.
 - Procedural Web Audio sounds and a looping synth bassline.
 - High score and mute preference persisted in `localStorage`.
+- Speed-reactive neon trails, a slowly shifting horizon palette and animated road lighting.
 
 ## Controls
 

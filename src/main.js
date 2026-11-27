@@ -4,6 +4,7 @@ import { SoundEngine } from './audio.js';
 import { ParticleManager } from './particles.js';
 import { PlayerController } from './player.js';
 import { WorldManager } from './world.js';
+import { materials } from './materials.js';
 
 /* ==========================================================================
    SCENE, CAMERA, RENDERER & LIGHTS SETUP
@@ -80,8 +81,18 @@ function createSkyBackground() {
     mountainGroup.add(m);
   }
   scene.add(mountainGroup);
+
+  return { sunMat };
 }
-createSkyBackground();
+const sky = createSkyBackground();
+
+// Pre-allocated colours for the horizon cycle; no colour objects are created
+// inside the render loop.
+const SUN_NIGHT = new THREE.Color(0xff3377);
+const SUN_WARM = new THREE.Color(0xffb36b);
+const FOG_NIGHT = new THREE.Color(CONFIG.colors.fog);
+const FOG_WARM = new THREE.Color(0x2a1245);
+const ROAD_LINE_BASE = new THREE.Color(CONFIG.colors.roadEdge);
 
 /* ==========================================================================
    MODULE INSTANTIATIONS
@@ -565,6 +576,15 @@ function animate(now) {
       player.meshData.group.position.z + 20
     );
   }
+
+  // Slow horizon cycle and a subtle pulse on the road neon.
+  const horizonPhase = (Math.sin(distanceTraveled * 0.0016) + 1) * 0.5;
+  sky.sunMat.color.copy(SUN_NIGHT).lerp(SUN_WARM, horizonPhase);
+  scene.fog.color.copy(FOG_NIGHT).lerp(FOG_WARM, horizonPhase);
+  hemiLight.intensity = 0.85 + horizonPhase * 0.25;
+  materials.roadLine.color.copy(ROAD_LINE_BASE).multiplyScalar(
+    0.85 + 0.15 * Math.sin(now * 0.004)
+  );
 
   // Camera follow & shake
   const targetCamZ = player.meshData.group.position.z + cameraBaseOffset.z;
