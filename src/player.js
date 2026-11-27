@@ -82,6 +82,27 @@ export function createPlayerMesh() {
   shadow.position.y = 0.02;
   playerGroup.add(shadow);
 
+  // Speed trails share one material and geometry; only opacity changes per frame.
+  const trailMaterial = new THREE.MeshBasicMaterial({
+    color: CONFIG.colors.playerBody,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const trailGeo = new THREE.BoxGeometry(0.06, 0.06, 1.4);
+  trailGeo.translate(0, 0, 0.7);
+
+  const trails = [];
+  for (let i = 0; i < 6; i++) {
+    const trail = new THREE.Mesh(trailGeo, trailMaterial);
+    const row = Math.floor(i / 2);
+    trail.position.set(i % 2 === 0 ? -0.26 : 0.26, 0.45 + row * 0.38, 0.35 + row * 0.12);
+    trail.scale.z = 0.7 + (i % 3) * 0.18;
+    playerGroup.add(trail);
+    trails.push(trail);
+  }
+
   return {
     group: playerGroup,
     body,
@@ -91,7 +112,9 @@ export function createPlayerMesh() {
     leftArm,
     rightArm,
     shield,
-    shadow
+    shadow,
+    trails,
+    trailMaterial
   };
 }
 
@@ -123,6 +146,7 @@ export class PlayerController {
     this.activeDoubleTimer = 0;
 
     this.meshData.shield.visible = false;
+    this.meshData.trailMaterial.opacity = 0;
     this.meshData.group.position.set(0, 0, 0);
     this.meshData.group.scale.set(1, 1, 1);
     this.meshData.group.visible = true;
@@ -199,6 +223,10 @@ export class PlayerController {
     if (this.activeDoubleTimer > 0) {
       this.activeDoubleTimer = Math.max(0, this.activeDoubleTimer - dt);
     }
+
+    // Trails brighten as the runner accelerates.
+    const speedRatio = (currentSpeed - CONFIG.baseSpeed) / (CONFIG.maxSpeed - CONFIG.baseSpeed);
+    this.meshData.trailMaterial.opacity = 0.05 + speedRatio * 0.22;
 
     // Position updates
     this.meshData.group.position.x = this.posX;
