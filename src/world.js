@@ -2,6 +2,28 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { materials } from './materials.js';
 
+const ROAD_WIDTH = CONFIG.laneWidth * CONFIG.numLanes + 1.2;
+const ROAD_GEO = new THREE.BoxGeometry(ROAD_WIDTH, 0.4, CONFIG.segmentLength);
+const BORDER_GEO = new THREE.BoxGeometry(0.2, 0.1, CONFIG.segmentLength);
+const DASH_GEO = new THREE.BoxGeometry(0.12, 0.02, 2.2);
+const TRUNK_GEO = new THREE.CylinderGeometry(0.2, 0.35, 1.2, 5);
+const FOLIAGE_GEO = new THREE.ConeGeometry(1.3, 2.8, 5);
+
+function acquire(pool) {
+  for (let i = 0; i < pool.length; i++) {
+    if (!pool[i].userData.active) return pool[i];
+  }
+  return null;
+}
+
+function acquireObstacle(pool, type) {
+  for (let i = 0; i < pool.length; i++) {
+    const item = pool[i];
+    if (!item.userData.active && item.userData.type === type) return item;
+  }
+  return null;
+}
+
 export class WorldManager {
   constructor(scene) {
     this.scene = scene;
@@ -17,33 +39,29 @@ export class WorldManager {
 
   createRoadSegment() {
     const group = new THREE.Group();
-    const roadWidth = CONFIG.laneWidth * CONFIG.numLanes + 1.2;
 
     // Road Base
-    const roadGeo = new THREE.BoxGeometry(roadWidth, 0.4, CONFIG.segmentLength);
-    const roadMesh = new THREE.Mesh(roadGeo, materials.road);
+    const roadMesh = new THREE.Mesh(ROAD_GEO, materials.road);
     roadMesh.position.y = -0.2;
     roadMesh.receiveShadow = true;
     group.add(roadMesh);
 
     // Glowing Neon Borders
-    const borderGeo = new THREE.BoxGeometry(0.2, 0.1, CONFIG.segmentLength);
-    const leftBorder = new THREE.Mesh(borderGeo, materials.roadLine);
-    leftBorder.position.set(-roadWidth / 2, 0.05, 0);
+    const leftBorder = new THREE.Mesh(BORDER_GEO, materials.roadLine);
+    leftBorder.position.set(-ROAD_WIDTH / 2, 0.05, 0);
     group.add(leftBorder);
 
-    const rightBorder = new THREE.Mesh(borderGeo, materials.roadLine);
-    rightBorder.position.set(roadWidth / 2, 0.05, 0);
+    const rightBorder = new THREE.Mesh(BORDER_GEO, materials.roadLine);
+    rightBorder.position.set(ROAD_WIDTH / 2, 0.05, 0);
     group.add(rightBorder);
 
     // Dashed Lane Markings
     for (let z = -CONFIG.segmentLength / 2 + 2; z < CONFIG.segmentLength / 2; z += 5) {
-      const dashGeo = new THREE.BoxGeometry(0.12, 0.02, 2.2);
-      const dash1 = new THREE.Mesh(dashGeo, materials.roadLine);
+      const dash1 = new THREE.Mesh(DASH_GEO, materials.roadLine);
       dash1.position.set(-CONFIG.laneWidth / 2, 0.02, z);
       group.add(dash1);
 
-      const dash2 = new THREE.Mesh(dashGeo, materials.roadLine);
+      const dash2 = new THREE.Mesh(DASH_GEO, materials.roadLine);
       dash2.position.set(CONFIG.laneWidth / 2, 0.02, z);
       group.add(dash2);
     }
@@ -52,23 +70,19 @@ export class WorldManager {
     const sceneryCount = 4;
     for (let i = 0; i < sceneryCount; i++) {
       const side = i % 2 === 0 ? -1 : 1;
-      const xDist = (roadWidth / 2 + 3 + Math.random() * 8) * side;
+      const xDist = (ROAD_WIDTH / 2 + 3 + Math.random() * 8) * side;
       const zPos = -CONFIG.segmentLength / 2 + (i + 0.5) * (CONFIG.segmentLength / sceneryCount);
 
       if (Math.random() < 0.45) {
         // Low-poly Crystal Tree
         const treeGroup = new THREE.Group();
-        const trunkGeo = new THREE.CylinderGeometry(0.2, 0.35, 1.2, 5);
-        const trunkMat = new THREE.MeshLambertMaterial({ color: 0x1d1135, flatShading: true });
-        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        const trunk = new THREE.Mesh(TRUNK_GEO, materials.treeTrunk);
         trunk.position.y = 0.6;
         trunk.castShadow = true;
         treeGroup.add(trunk);
 
-        const folGeo = new THREE.ConeGeometry(1.3, 2.8, 5);
-        const randomColor = CONFIG.colors.sceneryTrees[Math.floor(Math.random() * CONFIG.colors.sceneryTrees.length)];
-        const folMat = new THREE.MeshStandardMaterial({ color: randomColor, flatShading: true, roughness: 0.4 });
-        const foliage = new THREE.Mesh(folGeo, folMat);
+        const foliageIndex = Math.floor(Math.random() * materials.treeFoliage.length);
+        const foliage = new THREE.Mesh(FOLIAGE_GEO, materials.treeFoliage[foliageIndex]);
         foliage.position.y = 2.4;
         foliage.castShadow = true;
         treeGroup.add(foliage);
@@ -80,12 +94,8 @@ export class WorldManager {
         const h = 4 + Math.random() * 7;
         const w = 1.8 + Math.random() * 1.5;
         const towerGeo = new THREE.BoxGeometry(w, h, w);
-        const towerMat = new THREE.MeshStandardMaterial({
-          color: CONFIG.colors.sceneryBuildings[Math.floor(Math.random() * CONFIG.colors.sceneryBuildings.length)],
-          roughness: 0.5,
-          flatShading: true
-        });
-        const tower = new THREE.Mesh(towerGeo, towerMat);
+        const towerIndex = Math.floor(Math.random() * materials.tower.length);
+        const tower = new THREE.Mesh(towerGeo, materials.tower[towerIndex]);
         tower.position.set(xDist, h / 2 - 0.2, zPos);
         tower.castShadow = true;
         group.add(tower);
@@ -238,15 +248,24 @@ export class WorldManager {
     for (let i = 0; i < this.roadSegments.length; i++) {
       this.roadSegments[i].position.z = -i * CONFIG.segmentLength;
     }
-    this.obstaclePool.forEach(obs => { obs.visible = false; obs.userData.active = false; });
-    this.coinPool.forEach(coin => { coin.visible = false; coin.userData.active = false; });
-    this.powerupPool.forEach(p => { p.visible = false; p.userData.active = false; });
+    for (let i = 0; i < this.obstaclePool.length; i++) {
+      this.obstaclePool[i].visible = false;
+      this.obstaclePool[i].userData.active = false;
+    }
+    for (let i = 0; i < this.coinPool.length; i++) {
+      this.coinPool[i].visible = false;
+      this.coinPool[i].userData.active = false;
+    }
+    for (let i = 0; i < this.powerupPool.length; i++) {
+      this.powerupPool[i].visible = false;
+      this.powerupPool[i].userData.active = false;
+    }
     this.nextSpawnZ = -35;
   }
 
   spawnCoinLine(x, startZ, count = 3) {
     for (let i = 0; i < count; i++) {
-      const coin = this.coinPool.find(c => !c.userData.active);
+      const coin = acquire(this.coinPool);
       if (coin) {
         coin.userData.active = true;
         coin.visible = true;
@@ -265,7 +284,7 @@ export class WorldManager {
     ];
 
     arcPoints.forEach(pt => {
-      const coin = this.coinPool.find(c => !c.userData.active);
+      const coin = acquire(this.coinPool);
       if (coin) {
         coin.userData.active = true;
         coin.visible = true;
@@ -275,7 +294,7 @@ export class WorldManager {
   }
 
   spawnPowerup(x, z) {
-    const p = this.powerupPool.find(item => !item.userData.active);
+    const p = acquire(this.powerupPool);
     if (p) {
       p.userData.active = true;
       p.visible = true;
@@ -285,9 +304,11 @@ export class WorldManager {
 
   update(playerZ, distanceTraveled, dt, now) {
     // 1. Road recycling
-    for (let seg of this.roadSegments) {
+    const recycleOffset = this.roadSegments.length * CONFIG.segmentLength;
+    for (let i = 0; i < this.roadSegments.length; i++) {
+      const seg = this.roadSegments[i];
       if (seg.position.z > playerZ + CONFIG.despawnDistanceZ) {
-        seg.position.z -= this.roadSegments.length * CONFIG.segmentLength;
+        seg.position.z -= recycleOffset;
       }
     }
 
@@ -312,7 +333,7 @@ export class WorldManager {
         if (distanceTraveled > 400) allowedTypes.push('MOVING');
 
         const chosenType = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
-        const obs = this.obstaclePool.find(o => !o.userData.active && o.userData.type === chosenType);
+        const obs = acquireObstacle(this.obstaclePool, chosenType);
 
         if (obs) {
           obs.userData.active = true;
@@ -340,7 +361,8 @@ export class WorldManager {
     }
 
     // 3. Moving obstacles
-    for (let obs of this.obstaclePool) {
+    for (let i = 0; i < this.obstaclePool.length; i++) {
+      const obs = this.obstaclePool[i];
       if (obs.userData.active && obs.userData.type === 'MOVING') {
         obs.userData.movingPhase += dt * 3.2;
         obs.position.x = Math.sin(obs.userData.movingPhase) * CONFIG.laneWidth;
@@ -348,14 +370,16 @@ export class WorldManager {
     }
 
     // 4. Animate Coins & Power-ups
-    for (let coin of this.coinPool) {
+    for (let i = 0; i < this.coinPool.length; i++) {
+      const coin = this.coinPool[i];
       if (coin.userData.active) {
         coin.rotation.y += dt * 4.0;
         coin.position.y = coin.userData.initialY + Math.sin(now * 0.005 + coin.userData.bobOffset) * 0.15;
       }
     }
 
-    for (let p of this.powerupPool) {
+    for (let i = 0; i < this.powerupPool.length; i++) {
+      const p = this.powerupPool[i];
       if (p.userData.active) {
         p.rotation.y += dt * 3.0;
         p.position.y = p.userData.initialY + Math.sin(now * 0.004 + p.userData.bobOffset) * 0.18;

@@ -24,3 +24,5 @@ You should receive an acknowledgement within a few days.
 - The deployment workflow deploys only from `main`, uses least-privilege tokens,
   pins every third-party action to an immutable commit SHA and scans tracked
   source files for obvious secret patterns before publishing.
+- The `Verify` check must pass before a pull request can merge into the protected
+  `main` branch.

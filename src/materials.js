@@ -43,6 +43,20 @@ export const materials = {
     color: CONFIG.colors.roadGrid,
     wireframe: true
   }),
+  treeTrunk: new THREE.MeshLambertMaterial({
+    color: 0x1d1135,
+    flatShading: true
+  }),
+  treeFoliage: CONFIG.colors.sceneryTrees.map((color) => new THREE.MeshStandardMaterial({
+    color,
+    flatShading: true,
+    roughness: 0.4
+  })),
+  tower: CONFIG.colors.sceneryBuildings.map((color) => new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.5,
+    flatShading: true
+  })),
   coin: new THREE.MeshStandardMaterial({
     color: CONFIG.colors.coin,
     emissive: CONFIG.colors.coinGlow,

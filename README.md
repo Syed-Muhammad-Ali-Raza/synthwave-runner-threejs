@@ -1,178 +1,100 @@
-# ⚡ Neon Dash 3D - Low-Poly Synthwave Endless Runner
+# Neon Dash 3D
 
-[![Three.js](https://img.shields.io/badge/Three.js-r160-00f0ff?style=for-the-badge&logo=three.js&logoColor=black)](https://threejs.org/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-ES_Modules-f7df1e?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
-[![Web Audio API](https://img.shields.io/badge/Audio-Web_Audio_API-ff2a85?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
-[![License: MIT](https://img.shields.io/badge/License-MIT-ffe600?style=for-the-badge)](LICENSE)
+[![Deploy to GitHub Pages](https://github.com/Syed-Muhammad-Ali-Raza/synthwave-runner-threejs/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/Syed-Muhammad-Ali-Raza/synthwave-runner-threejs/actions/workflows/deploy-pages.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A high-performance, polished, retro synthwave 3D endless runner built using **Three.js** and procedural **Web Audio API**. Zero external build tools, zero asset dependencies — all 3D geometries, materials, animations, and sound effects are generated dynamically in the browser.
+A browser endless runner built with Three.js. The level, character animation, particle effects and audio are generated at runtime, so the project has no build step and no downloaded art or sound files.
 
----
+## Features
 
-## 🎮 Gameplay & Features
+- Three-lane movement with keyboard and touch controls.
+- Pooled obstacles, coins and power-ups. Hazard patterns always leave a route through each cluster.
+- Four hazard types: low hurdles, tall walls, overhead beams and moving drones.
+- Magnet, shield and score-multiplier power-ups with HUD timers.
+- Procedural Web Audio sounds and a looping synth bassline.
+- High score and mute preference persisted in `localStorage`.
 
-- **Procedural Low-Poly Runner**: Articulated character with speed-synchronized arm/leg swings, lateral banking lean, squash & stretch jump kinematics, and tucked slide poses.
-- **Fair Procedural World Spawner**: Dynamic 3-lane road recycling with guaranteed survivable hazard patterns and rewarding coin arcs over jumpable barriers.
-- **Dynamic Hazard Types**:
-  - 🔻 **Low Hurdles**: Can be jumped over or dodged.
-  - 🏢 **Tall Walls**: Require timely lane switching.
-  - ⚡ **High Laser Beams**: Require sliding underneath.
-  - 🛸 **Moving Drones**: Slide laterally between lanes at higher speeds.
-- **Power-Up System**:
-  - 🧲 **Coin Magnet** (8s): Pulls nearby coins into the player.
-  - 🛡️ **Neon Energy Shield** (15s): Absorbs one lethal collision.
-  - ⚡ **2X Score Multiplier** (10s): Doubles point accumulation.
-- **Zero-Asset Procedural Audio Engine**: Web Audio API sound synthesis with synthesized coin blips, jump whooshes, landing thuds, crash noise explosions, and an evolving retro synthwave bassline.
-- **High-Performance Architecture**: Zero-allocation collision loops, pre-allocated `THREE.Points` particle manager, and frame-rate-independent delta physics (steady 60 FPS).
-- **Glassmorphic Responsive UI**: Touch swipes and keyboard controls, score pop animations, power-up cooldown meters, pause overlay, and `localStorage` high-score persistence.
+## Controls
 
----
+| Action | Keyboard | Touch |
+| --- | --- | --- |
+| Move left | `A` or `Left Arrow` | Swipe left |
+| Move right | `D` or `Right Arrow` | Swipe right |
+| Jump | `W`, `Up Arrow` or `Space` | Swipe up or tap |
+| Slide | `S` or `Down Arrow` | Swipe down |
+| Pause or resume | `P` or `Escape` | Pause button |
 
-## 🕹️ Controls
+## Repository layout
 
-| Action | Keyboard | Touch / Mobile |
-|---|---|---|
-| **Move Left** | `A` or `◄ Left Arrow` | Swipe Left |
-| **Move Right** | `D` or `► Right Arrow` | Swipe Right |
-| **Jump** | `W` or `▲ Up Arrow` or `Space` | Swipe Up / Tap |
-| **Slide** | `S` or `▼ Down Arrow` | Swipe Down |
-| **Pause / Resume** | `P` or `Escape` | Pause Button (Top-Right) |
-
----
-
-## 📁 Project Structure
-
-```
-neon-dash-3d/
-├── index.html           # Main HTML entry and UI overlay markup
-├── css/
-│   ├── main.css         # Root stylesheet importing all CSS modules
-│   ├── variables.css    # Synthwave theme colors, glows, and typography
-│   ├── base.css         # Canvas container, resets, and viewport locks
-│   ├── hud.css          # In-game HUD cards, coin counters, and power-up meters
-│   ├── modals.css       # Start menu, pause screen, and game-over modals
-│   └── buttons.css      # Interactive buttons and control badges
-├── src/
-│   ├── config.js        # Global configuration, speeds, physics, and colors
-│   ├── audio.js         # Procedural Web Audio API sound FX and synth music
-│   ├── materials.js     # Shared GPU materials for low-poly synthwave rendering
-│   ├── particles.js     # Object-pooled particle systems (sparks, dust, explosions)
-│   ├── player.js        # Kinematic player controller, rigging, and animation state
-│   ├── world.js         # Infinite road recycling, scenery generation, and hazard pools
-│   └── main.js          # Three.js setup, game state machine, and render loop
-└── .agents/skills/      # Antigravity development skills for 3D games & animation
+```text
+index.html              Markup, import map and content security policy
+css/
+  main.css              Entry point for the stylesheets
+  variables.css         Theme tokens
+  base.css              Canvas and viewport styles
+  hud.css               In-game HUD
+  modals.css            Start, pause and game-over screens
+  buttons.css           Buttons and key badges
+src/
+  config.js             Gameplay constants and colours
+  audio.js              Web Audio synthesis
+  materials.js          Shared Three.js materials
+  particles.js          Pooled particle system
+  player.js             Player controller and rig animation
+  world.js              Road recycling and entity spawning
+  main.js               Scene setup, state machine and render loop
+scripts/
+  verify-site.mjs       Static checks used by CI
+.github/workflows/
+  ci.yml                Verification checks
+  deploy-pages.yml      GitHub Pages deployment
 ```
 
----
+## Running locally
 
-## 🚀 Getting Started
+ES modules need to be served over HTTP. Use one of the following from the project root:
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Syed-Muhammad-Ali-Raza/synthwave-runner-threejs
-cd synthwave-runner-threejs
-```
-
-### 2. Run Locally
-
-Since the project uses standard ES Modules (`import`/`export`), it should be served via any local HTTP server:
-
-**Using Node / npx:**
 ```bash
 npx serve -p 3000
 ```
-
-**Using Python:**
-```bash
-python -m http.server 3000
-```
-
-**Using VS Code:**
-Install the **Live Server** extension and click **"Go Live"**.
-
-Open your browser at `http://localhost:3000`.
-
-On Windows without Node, Python also works:
 
 ```bash
 py -m http.server 3000
 ```
 
----
+Then open `http://localhost:3000`.
 
-## 🌐 Deployment
+Gameplay values and colours live in [`src/config.js`](src/config.js).
 
-The game is a static site and is deployed automatically to GitHub Pages by
-[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) on every
-push to `main`.
+## Deployment
 
-**Live site:** <https://syed-muhammad-ali-raza.github.io/synthwave-runner-threejs/>
+Pushes to `main` run the [`Deploy to GitHub Pages`](.github/workflows/deploy-pages.yml) workflow. The published site is:
 
-The workflow publishes only `index.html`, `css/`, `src/` and `.nojekyll` from the
-default branch. It does not use repository secrets, requires only
-`contents: read`, `pages: write` and `id-token: write`, and pins all third-party
-actions to immutable commit SHAs.
+<https://syed-muhammad-ali-raza.github.io/synthwave-runner-threejs/>
 
-Repository setup (one time, in **Settings → Pages**): choose **GitHub Actions**
-as the Pages source. No custom domain is configured; the default `github.io`
-URL is used.
+The workflow publishes only `index.html`, `css/`, `src/` and `.nojekyll`. It uses a least-privilege token, pins third-party actions to commit SHAs, and checks tracked source files for common secret patterns before uploading.
 
----
+`main` is protected: changes must arrive through a pull request, the `Verify` check must pass, branches must be up to date, and force pushes and branch deletion are blocked.
 
-## 🔒 Security
+## Verification
 
-- **Content Security Policy** in `index.html` allows scripts only from this origin,
-  the pinned Three.js CDN URL and the hashed inline import map. Frames, plugins,
-  form submissions, workers and unexpected network destinations are blocked.
-  If you edit the import map, regenerate its SHA-256 hash and update the CSP.
-- **Safe DOM construction**: power-up HUD elements are built with `createElement`
-  and `textContent`; no runtime value is inserted via `innerHTML`.
-- **Validated persisted data**: the stored high score must be a non-negative
-  safe integer before it is used.
-- **Deployment hardening**: secret-pattern scan before publishing, least-privilege
-  permissions, pinned actions and no untrusted pull-request deployments.
+The [`ci.yml`](.github/workflows/ci.yml) workflow runs on pull requests and pushes to `main`. It checks JavaScript syntax, validates local asset references and the CSP import-map hash, and scans tracked source files for secrets. Run the same checks locally with:
 
-See [`SECURITY.md`](SECURITY.md) for how to report a vulnerability.
-
----
-
-## ⚙️ Customization & Tuning
-
-All gameplay metrics, speeds, and aesthetic palettes can be tuned in [`src/config.js`](src/config.js):
-
-```javascript
-export const CONFIG = {
-  laneWidth: 2.2,          // Distance between lanes
-  baseSpeed: 19.0,         // Starting speed
-  maxSpeed: 44.0,          // Maximum speed cap
-  speedAccel: 0.35,        // Speed gain per second
-  gravity: 42.0,           // Jump gravity
-  jumpForce: 13.5,         // Jump impulse
-  slideDuration: 0.72,     // Seconds sliding lasts
-  // Colors & theme tokens...
-};
+```bash
+node scripts/verify-site.mjs
 ```
 
----
+See [`SECURITY.md`](SECURITY.md) for the security policy and vulnerability reporting instructions.
 
-## 🤝 Contributing
+## Contributing
 
-Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**!
+1. Fork the repository and create a branch from `main`.
+2. Make your change and run the game locally.
+3. Run `node scripts/verify-site.mjs` before opening a pull request.
+4. Open a pull request and make sure the `Verify` check passes.
 
-### How to Contribute
-1. **Fork the Project**
-2. **Create your Feature Branch** (`git checkout -b feature/AmazingFeature`)
-3. **Commit your Changes** (`git commit -m 'Add some AmazingFeature'`)
-4. **Push to the Branch** (`git push origin feature/AmazingFeature`)
-5. **Open a Pull Request**
+Keep new assets procedural where practical, reuse the existing object pools, and avoid allocations inside the render loop.
 
-### Contribution Guidelines
-- **Zero Heavy Assets**: Keep models procedural using Three.js primitives and sound procedural using Web Audio API where possible.
-- **Zero-Allocation Game Loop**: Avoid allocating new objects (`new THREE.Vector3()`, `new THREE.Box3()`) inside the per-frame `animate()` loop.
-- **Maintain Modular Architecture**: Place new game features into their respective modules in `src/` or stylesheets in `css/`.
+## License
 
----
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+Released under the MIT License. See [`LICENSE`](LICENSE).

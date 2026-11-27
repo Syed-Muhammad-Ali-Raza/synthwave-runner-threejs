@@ -8,6 +8,7 @@ export class ParticleManager {
     this.positions = new Float32Array(this.maxParticles * 3);
     this.colors = new Float32Array(this.maxParticles * 3);
     this.velocities = [];
+    this.colorCache = new Map();
     this.lifetimes = new Float32Array(this.maxParticles);
     this.maxLifetimes = new Float32Array(this.maxParticles);
 
@@ -32,7 +33,11 @@ export class ParticleManager {
   }
 
   spawnBurst(pos, colorHex, count = 18, speedMult = 1.0) {
-    const color = new THREE.Color(colorHex);
+    let color = this.colorCache.get(colorHex);
+    if (!color) {
+      color = new THREE.Color(colorHex);
+      this.colorCache.set(colorHex, color);
+    }
     let spawned = 0;
     for (let i = 0; i < this.maxParticles && spawned < count; i++) {
       if (this.lifetimes[i] <= 0) {

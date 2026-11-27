@@ -1,0 +1,40 @@
+name: Verify
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Check JavaScript syntax
+        run: |
+          for file in src/*.js scripts/*.mjs; do
+            node --input-type=module --check < "$file"
+          done
+
+      - name: Check tracked files for committed secrets
+        run: |
+          if git grep -I -l -E '(-----BEGIN (RSA|OPENSSH|EC|DSA|PGP) PRIVATE KEY-----|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{30,})' -- '*.js' '*.html' '*.css' '*.json' '*.yml' '*.yaml'; then
+            echo "::error::Possible secret material found in tracked source files"
+            exit 1
+          fi
+
+      - name: Verify site configuration
+        run: node scripts/verify-site.mjs

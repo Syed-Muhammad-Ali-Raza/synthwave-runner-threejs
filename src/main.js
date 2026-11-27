@@ -91,6 +91,9 @@ const particles = new ParticleManager(scene);
 const player = new PlayerController(scene, audio);
 const world = new WorldManager(scene);
 
+// The player group is the light target for the whole session.
+dirLight.target = player.meshData.group;
+
 /* ==========================================================================
    GAME STATE & SCORING
    ========================================================================== */
@@ -127,11 +130,29 @@ const powerupContainer = document.getElementById('powerup-container');
 const screenStart = document.getElementById('screen-start');
 const screenPause = document.getElementById('screen-pause');
 const screenGameOver = document.getElementById('screen-gameover');
+const flashOverlay = document.getElementById('flash-overlay');
 
+const lastHud = { score: null, coins: null, distance: null };
+
+// Only touch the DOM when a displayed value actually changes. The render loop
+// calls this at a fixed interval instead of once per frame.
 function updateHUD() {
-  hudScore.textContent = Math.floor(score).toLocaleString();
-  hudCoins.textContent = coinsCollected.toLocaleString();
-  hudDist.textContent = Math.floor(distanceTraveled) + 'm';
+  const scoreText = Math.floor(score).toLocaleString();
+  const coinsText = coinsCollected.toLocaleString();
+  const distanceText = Math.floor(distanceTraveled) + 'm';
+
+  if (scoreText !== lastHud.score) {
+    hudScore.textContent = scoreText;
+    lastHud.score = scoreText;
+  }
+  if (coinsText !== lastHud.coins) {
+    hudCoins.textContent = coinsText;
+    lastHud.coins = coinsText;
+  }
+  if (distanceText !== lastHud.distance) {
+    hudDist.textContent = distanceText;
+    lastHud.distance = distanceText;
+  }
 }
 
 function triggerScorePop() {
@@ -285,6 +306,7 @@ const _playerPosVec = new THREE.Vector3();
 const _playerSizeVec = new THREE.Vector3();
 const _entityPosVec = new THREE.Vector3();
 const _entitySizeVec = new THREE.Vector3();
+const _magnetTargetVec = new THREE.Vector3();
 
 function checkCollisions() {
   if (gameState !== 'PLAYING') return;
@@ -297,7 +319,8 @@ function checkCollisions() {
   _playerBox.setFromCenterAndSize(_playerPosVec, _playerSizeVec);
 
   // 1. Obstacles
-  for (let obs of world.obstaclePool) {
+  for (let i = 0; i < world.obstaclePool.length; i++) {
+    const obs = world.obstaclePool[i];
     if (!obs.userData.active || !obs.visible) continue;
 
     const dz = Math.abs(obs.position.z - player.meshData.group.position.z);
@@ -330,17 +353,23 @@ function checkCollisions() {
   }
 
   // 2. Coins
-  for (let coin of world.coinPool) {
+  const playerZ = player.meshData.group.position.z;
+  const magnetActive = player.activeMagnetTimer > 0;
+  const magnetRadiusSq = CONFIG.magnetRadius * CONFIG.magnetRadius;
+
+  for (let i = 0; i < world.coinPool.length; i++) {
+    const coin = world.coinPool[i];
     if (!coin.userData.active || !coin.visible) continue;
 
-    const dz = coin.position.z - player.meshData.group.position.z;
-    const distToPlayer = coin.position.distanceTo(player.meshData.group.position);
+    const dz = coin.position.z - playerZ;
 
-    if (player.activeMagnetTimer > 0 && distToPlayer < CONFIG.magnetRadius) {
-      coin.position.lerp(
-        new THREE.Vector3(player.posX, player.posY + 0.8, player.meshData.group.position.z),
-        0.18
-      );
+    if (magnetActive && Math.abs(dz) < CONFIG.magnetRadius) {
+      const dx = coin.position.x - player.posX;
+      const dy = coin.position.y - (player.posY + 0.8);
+      if (dx * dx + dy * dy + dz * dz < magnetRadiusSq) {
+        _magnetTargetVec.set(player.posX, player.posY + 0.8, playerZ);
+        coin.position.lerp(_magnetTargetVec, 0.18);
+      }
     }
 
     if (Math.abs(dz) < 2.0) {
@@ -362,10 +391,11 @@ function checkCollisions() {
   }
 
   // 3. Power-ups
-  for (let p of world.powerupPool) {
+  for (let i = 0; i < world.powerupPool.length; i++) {
+    const p = world.powerupPool[i];
     if (!p.userData.active || !p.visible) continue;
 
-    const dz = Math.abs(p.position.z - player.meshData.group.position.z);
+    const dz = Math.abs(p.position.z - playerZ);
     if (dz < 2.0) {
       _entitySizeVec.set(1.3, 1.5, 1.3);
       _coinBox.setFromCenterAndSize(p.position, _entitySizeVec);
@@ -391,10 +421,9 @@ function checkCollisions() {
 }
 
 function triggerScreenFlash(color = '#ff1e56') {
-  const flash = document.getElementById('flash-overlay');
-  flash.style.background = color;
-  flash.style.opacity = '0.75';
-  setTimeout(() => { flash.style.opacity = '0'; }, 90);
+  flashOverlay.style.background = color;
+  flashOverlay.style.opacity = '0.75';
+  setTimeout(() => { flashOverlay.style.opacity = '0'; }, 90);
 }
 
 function triggerCrash() {
@@ -498,6 +527,7 @@ document.addEventListener('visibilitychange', () => {
    ANIMATION & RENDER LOOP
    ========================================================================== */
 let lastTime = performance.now();
+let lastHudRefresh = 0;
 
 function animate(now) {
   requestAnimationFrame(animate);
@@ -515,7 +545,10 @@ function animate(now) {
     distanceTraveled += forwardStep;
     const scoreMultiplier = player.activeDoubleTimer > 0 ? 2 : 1;
     score += forwardStep * 2.2 * scoreMultiplier;
-    updateHUD();
+    if (now - lastHudRefresh >= 100) {
+      updateHUD();
+      lastHudRefresh = now;
+    }
 
     processInputBuffer();
 
@@ -531,7 +564,6 @@ function animate(now) {
       player.posY + 25,
       player.meshData.group.position.z + 20
     );
-    dirLight.target = player.meshData.group;
   }
 
   // Camera follow & shake
@@ -551,8 +583,11 @@ function animate(now) {
 
   const speedRatio = (currentSpeed - CONFIG.baseSpeed) / (CONFIG.maxSpeed - CONFIG.baseSpeed);
   const targetFOV = 65 + speedRatio * 14;
-  camera.fov = THREE.MathUtils.damp(camera.fov, targetFOV, 3.0, dt);
-  camera.updateProjectionMatrix();
+  const smoothedFOV = THREE.MathUtils.damp(camera.fov, targetFOV, 3.0, dt);
+  if (Math.abs(smoothedFOV - camera.fov) > 0.01) {
+    camera.fov = smoothedFOV;
+    camera.updateProjectionMatrix();
+  }
 
   camera.lookAt(player.posX * 0.2, 1.4 + player.posY * 0.2, player.meshData.group.position.z - 7.0);
 

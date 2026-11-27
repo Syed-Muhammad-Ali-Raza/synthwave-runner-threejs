@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { CONFIG } from './config.js';
 import { materials } from './materials.js';
 
+const UNIT_SCALE = new THREE.Vector3(1, 1, 1);
+
 export function createPlayerMesh() {
   const playerGroup = new THREE.Group();
 
@@ -180,7 +182,7 @@ export class PlayerController {
       }
     }
 
-    this.meshData.group.scale.lerp(new THREE.Vector3(1, 1, 1), 12.0 * dt);
+    this.meshData.group.scale.lerp(UNIT_SCALE, 12.0 * dt);
 
     // Slide timer
     if (this.isSliding) {
